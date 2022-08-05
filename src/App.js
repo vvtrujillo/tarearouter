@@ -1,24 +1,80 @@
-import logo from './logo.svg';
+import React, {useEffect, useState} from 'react';
+import { Container, Row } from 'reactstrap';
 import './App.css';
+import Formulario from './Components/Formulario';
+import Listado from './Components/Listado';
+import Swal from 'sweetalert2';
+import { Route, Routes, useNavigate } from "react-router-dom";
+import Cabecera from './Components/Cabecera';
+import Contexto from './contexts/contexto';
 
 function App() {
+  const [data, setData] = useState([]);
+  const [obj, setObj] = useState({});
+  const [usuario, setUsuario] = useState({
+    nombre: '',
+    email: ''
+})
+
+const navigate = useNavigate();
+
+const agregar = (obj) => {
+  setData([...data, obj]);
+}
+
+const editar = (obj) => {
+  if(obj.indice>=0) {
+    let arr = [...data];
+    arr.splice(obj.indice, 1, obj);
+    setData(arr);
+    return true;
+  } else {
+    Swal.fire('Editar', 'Error al editar los datos', 'error');
+    return false;
+  }
+}
+
+const eliminar = (nombre, indice) =>{
+  Swal.fire({
+    title: 'Eliminar', 
+    text: `¿Está seguro que desea eliminar el elemento ${nombre} en la posición ${indice}`, 
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Si eliminar!!!'
+
+  }).then(resp => {
+    if(resp.isConfirmed){
+      setData(data.filter((d, i) => i != indice));
+    }
+  })
+}
+
+const irAEditar = (dato, i) => {
+  setObj({...dato, indice: i});
+  navigate('/edit');
+
+}
+
+useEffect(()=> {
+  setTimeout(()=>{
+    setUsuario({
+      nombre: 'Camila',
+      email: 'camila@test.cl'
+    })
+  }, 5000)
+}, [])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Contexto.Provider value={{usuario: usuario, texto: 'Esta es otra prueba'}}>
+        <Container>
+          <Cabecera/>
+          <Routes>
+            <Route path='/' element={<Listado data={data} eliminarFn={eliminar} irAEditarFn={irAEditar} />} />
+            <Route path='/add' element={<Formulario agregarFn={agregar}/>} /> 
+            <Route path='/edit' element={<Formulario dato={obj} editarFn={editar}/>} /> 
+          </Routes>
+        </Container>
+      </Contexto.Provider>
   );
 }
 
